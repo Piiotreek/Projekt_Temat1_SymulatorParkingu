@@ -14,8 +14,18 @@ Program ten symuluje zarządzanie parkingiem z następującymi funkcjami:
  # Użycie:
   Uruchom program i postępuj zgodnie z instrukcjami na ekranie, aby interagować z parkingiem.
 
+# Wymagania
+- Zainstalowany Docker
+
 # Autorzy: 
 Piotr Poletyło i Aleksander Ostrowski
 
 # Data: 
 2024-06
+
+# Jak uruchomić za pomocą Docker
+```bash
+git clone https://github.com/Piiotreek/Projekt_Temat1_SymulatorParkingu.git
+cd Projekt_Temat1_SymulatorParkingu
+docker build -t symulator-parkingu .
+docker run symulator-parkingu
