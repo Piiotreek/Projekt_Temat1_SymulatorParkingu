@@ -3,48 +3,96 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+/**
+ * ParkingSimulator - Program symulacji parkingu.
 
+ * Program ten symuluje zarządzanie parkingiem z następującymi funkcjami:
+ * - Rejestracja wjazdu i wyjazdu pojazdów z numerem rejestracyjnym i znacznikami czasowymi.
+ * - Obsługuje wiele typów pojazdów: Samochód i Van dostawczy.
+ * - Automatycznie oblicza opłaty na podstawie czasu parkowania i typu pojazdu.
+ * - Śledzi dostępne miejsca parkingowe.
+ * - Utrzymuje listę aktualnie zaparkowanych pojazdów.
+ * - Zapewnia historię parkowania, raporty dzienne i symulację czasu.
+ * Program jest zaprojektowany jako pojedynczy plik Java z interfejsem konsolowym.
+ * Użycie:
+ * Uruchom program i postępuj zgodnie z instrukcjami na ekranie, aby interagować z parkingiem.
+
+ */
 public class ParkingSimulator {
 
+
+    /**
+     *Abstrakcyjna klasa reprezentująca pojazd.
+     *Przechowuje numer rejestracyjny i czas wjazdu.
+     */
 
     public static abstract class Vehicle {
         private final String licensePlate;
         private LocalDateTime entryTime;
 
-
+        /**
+         * Konstruktor dla pojazdu.
+         * @param licensePlate Numer rejestracyjny pojazdu.
+         * @param entryTime    Czas wjazdu na parking.
+         */
         public Vehicle(String licensePlate, LocalDateTime entryTime) {
             this.licensePlate = licensePlate;
             this.entryTime = entryTime;
         }
 
+        /**
+         * Pobierz numer rejestracyjny.
+         * @return Numer rejestracyjny jako string.
+         */
         public String getLicensePlate() {
             return licensePlate;
         }
 
-
+        /**
+         * Pobierz czas wjazdu.
+         * @return Czas wjazdu jako LocalDateTime.
+         */
         public LocalDateTime getEntryTime() {
             return entryTime;
         }
 
-
+        /**
+         * Ustaw czas wjazdu (do celów symulacji).
+         *
+         * @param entryTime nowy czas wjazdu
+         */
         public void setEntryTime(LocalDateTime entryTime) {
             this.entryTime = entryTime;
         }
 
-
+        /**
+         * Abstrakcyjna metoda do pobrania stawki za parkowanie na godzinę.
+         *
+         * @return Stawka godzinowa w jednostkach walutowych.
+         */
         public abstract double getHourlyRate();
 
-
+        /**
+         * Pobierz nazwę typu pojazdu.
+         *
+         * @return Typ jako string.
+         */
         public abstract String getType();
 
-
+        /**
+         * Reprezentacja tekstowa pojazdu.
+         *
+         * @return string z typem i numerem rejestracyjnym.
+         */
         @Override
         public String toString() {
             return String.format("%s [Numer: %s]", getType(), licensePlate);
         }
     }
 
-
+    /**
+     * Typ pojazdu: Samochód.
+     */
     public static class Car extends Vehicle {
         private static final double HOURLY_RATE = 5.0;
 
@@ -63,7 +111,9 @@ public class ParkingSimulator {
         }
     }
 
-
+    /**
+     * Typ pojazdu: Van dostawczy.
+     */
     public static class DeliveryVan extends Vehicle {
         private static final double HOURLY_RATE = 8.0;
 
@@ -82,38 +132,62 @@ public class ParkingSimulator {
         }
     }
 
-
+    /**
+     * ParkingSpot reprezentujący pojedyncze miejsce na parkingu.
+     */
     public static class ParkingSpot {
         private final int spotNumber;
         private Vehicle parkedVehicle;
 
-
+        /**
+         * Konstruktor dla miejsca parkingowego.
+         *
+         * @param spotNumber indeks miejsca.
+         */
         public ParkingSpot(int spotNumber) {
             this.spotNumber = spotNumber;
             this.parkedVehicle = null;
         }
 
-
+        /**
+         * Sprawdź, czy miejsce jest zajęte.
+         *
+         * @return true, jeśli zajęte.
+         */
         public boolean isOccupied() {
             return parkedVehicle != null;
         }
 
-
+        /**
+         * Zaparkuj pojazd w tym miejscu.
+         *
+         * @param vehicle pojazd do zaparkowania.
+         */
         public void parkVehicle(Vehicle vehicle) {
             this.parkedVehicle = vehicle;
         }
 
-
+        /**
+         * Usuń pojazd z tego miejsca.
+         */
         public void removeVehicle() {
             this.parkedVehicle = null;
         }
 
-
+        /**
+         * Pobierz zaparkowany pojazd.
+         *
+         * @return Pojazd aktualnie zaparkowany lub null.
+         */
         public Vehicle getParkedVehicle() {
             return parkedVehicle;
         }
 
-
+        /**
+         * Pobierz numer miejsca.
+         *
+         * @return numer miejsca.
+         */
         public int getSpotNumber() {
             return spotNumber;
         }
@@ -130,15 +204,22 @@ public class ParkingSimulator {
         }
     }
 
-
+    /**
+     * Klasa reprezentująca parking.
+     * Zarządza miejscami parkingowymi, wjazdami i wyjazdami pojazdów, obliczaniem opłat i raportowaniem.
+     */
     public static class ParkingLot {
         private final int capacity;
         private final List<ParkingSpot> spots;
-        private final Map<String, ParkingRecord> parkingHistory;
-        private final List<ParkingRecord> dailyRecords;
+        private final Map<String, ParkingRecord> parkingHistory; // numer rejestracyjny -> historia
+        private final List<ParkingRecord> dailyRecords; // wszystkie rekordy do raportu dziennego
         private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-
+        /**
+         * Konstruktor dla ParkingLot.
+         *
+         * @param capacity liczba miejsc parkingowych.
+         */
         public ParkingLot(int capacity) {
             this.capacity = capacity;
             this.spots = new ArrayList<>(capacity);
@@ -149,7 +230,11 @@ public class ParkingSimulator {
             this.dailyRecords = new ArrayList<>();
         }
 
-
+        /**
+         * Zwraca liczbę dostępnych miejsc parkingowych.
+         *
+         * @return liczba dostępnych miejsc.
+         */
         public int getAvailableSpots() {
             int count = 0;
             for (ParkingSpot spot : spots) {
@@ -160,7 +245,11 @@ public class ParkingSimulator {
             return count;
         }
 
-
+        /**
+         * Znajdź pierwszy dostępny indeks miejsca lub -1, jeśli brak dostępnych.
+         *
+         * @return indeks miejsca lub -1, jeśli pełne.
+         */
         private int findFirstAvailableSpotIndex() {
             for (int i = 0; i < spots.size(); i++) {
                 if (!spots.get(i).isOccupied()) {
@@ -170,34 +259,45 @@ public class ParkingSimulator {
             return -1;
         }
 
-
+        /**
+         * Zarejestruj wjazd pojazdu.
+         *
+         * @param vehicle Pojazd do wjazdu.
+         * @return true, jeśli pomyślnie zaparkowano, false, jeśli pełne.
+         */
         public boolean enterVehicle(Vehicle vehicle) {
             int spotIndex = findFirstAvailableSpotIndex();
             if (spotIndex == -1) {
-                return false;
+                return false; // brak miejsca
             }
             spots.get(spotIndex).parkVehicle(vehicle);
             return true;
         }
 
-
+        /**
+         * Zarejestruj wyjazd pojazdu.
+         *
+         * @param licensePlate Numer rejestracyjny wyjeżdżającego pojazdu.
+         * @param exitTime     Czas wyjazdu.
+         * @return obiekt ParkingPayment, jeśli znaleziono i wyjechał, null, jeśli nie znaleziono.
+         */
         public ParkingPayment exitVehicle(String licensePlate, LocalDateTime exitTime) {
             ParkingSpot spot = findVehicleSpot(licensePlate);
             if (spot == null) {
-                return null;
+                return null; // pojazd nie znaleziony
             }
             Vehicle vehicle = spot.getParkedVehicle();
             Vehicle clonedVehicle = cloneVehicle(vehicle);
 
-
+            // Oblicz czas parkowania i opłatę
             long minutesParked = Duration.between(vehicle.getEntryTime(), exitTime).toMinutes();
-            if (minutesParked < 0) minutesParked = 0;
+            if (minutesParked < 0) minutesParked = 0; // ochrona przed nieprawidłowym czasem
             double hoursParked = Math.ceil(minutesParked / 60.0);
             double fee = hoursParked * vehicle.getHourlyRate();
 
             spot.removeVehicle();
 
-
+            // Utwórz rekord
             ParkingRecord record = new ParkingRecord(vehicle.getLicensePlate(), vehicle.getType(),
                     vehicle.getEntryTime(), exitTime, fee);
             dailyRecords.add(record);
@@ -206,7 +306,12 @@ public class ParkingSimulator {
             return new ParkingPayment(record, hoursParked, fee);
         }
 
-
+        /**
+         * Znajdź miejsce parkingowe, które aktualnie zajmuje pojazd o podanym numerze rejestracyjnym.
+         *
+         * @param licensePlate string numer rejestracyjny.
+         * @return ParkingSpot lub null, jeśli nie znaleziono.
+         */
         private ParkingSpot findVehicleSpot(String licensePlate) {
             for (ParkingSpot spot : spots) {
                 if (spot.isOccupied() && spot.getParkedVehicle().getLicensePlate().equalsIgnoreCase(licensePlate)) {
@@ -216,7 +321,11 @@ public class ParkingSimulator {
             return null;
         }
 
-
+        /**
+         * Lista aktualnie zaparkowanych pojazdów.
+         *
+         * @return Lista stringów opisujących zaparkowane pojazdy.
+         */
         public List<String> listParkedVehicles() {
             List<String> list = new ArrayList<>();
             for (ParkingSpot spot : spots) {
@@ -232,7 +341,11 @@ public class ParkingSimulator {
             return list;
         }
 
-
+        /**
+         * Generuje raport dzienny jako string.
+         *
+         * @return raport z całkowitą liczbą pojazdów i dochodem.
+         */
         public String generateDailyReport() {
             StringBuilder sb = new StringBuilder();
             sb.append("Dzienny Raport Parkingowy\n");
@@ -259,12 +372,16 @@ public class ParkingSimulator {
             return sb.toString();
         }
 
-
+        /**
+         * Wyczyść dzienne rekordy (symuluj nowy dzień).
+         */
         public void clearDailyReport() {
             dailyRecords.clear();
         }
 
-
+        /**
+         * Wewnętrzna klasa pomocnicza do reprezentacji szczegółów płatności parkingowej.
+         */
         public static class ParkingPayment {
             private final ParkingRecord record;
             private final double hoursParked;
@@ -289,7 +406,9 @@ public class ParkingSimulator {
             }
         }
 
-
+        /**
+         * ParkingRecord przechowuje szczegóły pojedynczej sesji parkowania.
+         */
         public static class ParkingRecord {
             private final String licensePlate;
             private final String vehicleType;
@@ -327,7 +446,12 @@ public class ParkingSimulator {
             }
         }
 
-
+        /**
+         * Metoda pomocnicza do klonowania instancji pojazdu.
+         *
+         * @param vehicle Pojazd do sklonowania.
+         * @return sklonowany Pojazd.
+         */
         private Vehicle cloneVehicle(Vehicle vehicle) {
             if (vehicle instanceof Car) {
                 return new Car(vehicle.getLicensePlate(), vehicle.getEntryTime());
@@ -339,19 +463,35 @@ public class ParkingSimulator {
         }
     }
 
-
+    /**
+     * Główny program z interfejsem użytkownika w konsoli.
+     * Obsługuje:
+     * - Wjazd pojazdu
+     * - Wyjazd pojazdu
+     * - Sprawdzenie dostępności
+     * - Lista aktualnie zaparkowanych pojazdów
+     * - Generowanie raportu dziennego
+     * - Wyczyść raport dzienny (symuluj nowy dzień)
+     * - Symulacja czasu: ręczne przesunięcie aktualnego czasu
+     */
     public static class Program {
         private static final Scanner scanner = new Scanner(System.in);
         private final ParkingLot parkingLot;
         private LocalDateTime currentSimTime;
 
-
+        /**
+         * Inicjalizuje program z podaną wielkością parkingu i ustawia czas rozpoczęcia symulacji.
+         *
+         * @param capacity całkowita liczba miejsc parkingowych
+         */
         public Program(int capacity) {
             this.parkingLot = new ParkingLot(capacity);
             this.currentSimTime = LocalDateTime.now();
         }
 
-
+        /**
+         * Uruchamia interfejs konsolowy, obsługując polecenia użytkownika.
+         */
         public void run() {
             printWelcome();
             boolean exitRequested = false;
@@ -548,9 +688,15 @@ public class ParkingSimulator {
             System.out.println("Czas symulacji przesunięty do: " + currentSimTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         }
 
-
+        /**
+         * Program entry point.
+         *
+         * @param args argumenty wiersza poleceń (nieużywane)
+         */
         public static void main(String[] args) {
             final int parkingCapacity = 20; // Stała liczba miejsc parkingowych do demonstracji; można dostosować
             Program program = new Program(parkingCapacity);
             program.run();
         }}}
+
+
